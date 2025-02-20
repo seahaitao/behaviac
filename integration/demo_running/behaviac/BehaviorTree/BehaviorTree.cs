@@ -628,10 +628,12 @@ namespace behaviac
                         {
                             if (c.Tag == "attachment")
                             {
+                                // 附件(前置,后置)
                                 bHasEvents = this.load_attachment(version, agentType, bHasEvents, c);
                             }
                             else if (c.Tag == "custom")
                             {
+                                // 中断条件(重新开始)
                                 Debug.Check(c.Children.Count == 1);
                                 SecurityElement customNode = (SecurityElement)c.Children[0];
                                 BehaviorNode pChildNode = BehaviorNode.load(agentType, customNode, version);
@@ -706,14 +708,17 @@ namespace behaviac
 
                     if (flagStr == "precondition")
                     {
+                        // 前置
                         bIsPrecondition = true;
                     }
                     else if (flagStr == "effector")
                     {
+                        // 后置
                         bIsEffector = true;
                     }
                     else if (flagStr == "transition")
                     {
+                        // event
                         bIsTransition = true;
                     }
 
@@ -1352,7 +1357,6 @@ namespace behaviac
             this.m_customCondition = node;
         }
 
-#if !BEHAVIAC_RELEASE
         private string m_agentType;
 
         public void SetAgentType(string agentType)
@@ -1367,7 +1371,6 @@ namespace behaviac
             return this.m_agentType;
         }
 
-#endif
 
         protected abstract BehaviorTask createTask();
 
@@ -1609,6 +1612,7 @@ namespace behaviac
 
                 this.SetClassNameString("BehaviorTree");
                 this.SetId(-1);
+                this.SetAgentType(agentType);
 
                 if (!string.IsNullOrEmpty(fsm) && fsm == "true")
                 {
@@ -1657,6 +1661,7 @@ namespace behaviac
 
                         this.SetClassNameString("BehaviorTree");
                         this.SetId(-1);
+                        this.SetAgentType(agentType);
 
                         this.m_bIsFSM = bFsm;
 

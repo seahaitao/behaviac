@@ -469,16 +469,16 @@ namespace behaviac
 
                     if (pParent == null)
                     {
-                        string errorInfo = string.Format("[instance] The instance \"{0}\" can not be found, so please check the Agent.BindInstance(...) method has been called for this instance.\n", instanceName);
-
-                        Debug.Check(false, errorInfo);
+                        string errorInfo = string.Format("[instance] The instance \"{0}\" can not be found, so please check the Agent.BindInstance(...) method has been called for this instance. Agent file name:{1} .\n", instanceName, pAgent.CurrentTreeTask.GetName());
+                        
+                        //Debug.Check(false, errorInfo);
 
                         LogManager.Instance.Log(errorInfo);
 
 #if !BEHAVIAC_NOT_USE_UNITY
                         UnityEngine.Debug.LogError(errorInfo);
 #else
-                        Console.WriteLine(errorInfo);
+                        Debug.LogWarning(errorInfo);
 #endif
                     }
                 }
@@ -1198,6 +1198,8 @@ namespace behaviac
 
     static public class Debug
     {
+        public static NLog.ILogger Logger = null;
+
         [Conditional("BEHAVIAC_DEBUG")]
         [Conditional("UNITY_EDITOR")]
         public static void CheckEqual<T>(T l, T r)
@@ -1246,7 +1248,7 @@ namespace behaviac
 #if !BEHAVIAC_NOT_USE_UNITY
             UnityEngine.Debug.Log(message);
 #else
-            Console.WriteLine(message);
+            Logger?.Info(message);
 #endif
         }
 
@@ -1256,7 +1258,7 @@ namespace behaviac
 #if !BEHAVIAC_NOT_USE_UNITY
             UnityEngine.Debug.LogWarning(message);
 #else
-            Console.WriteLine(message);
+            Logger?.Warn(message);
 #endif
         }
 
@@ -1267,7 +1269,7 @@ namespace behaviac
 #if !BEHAVIAC_NOT_USE_UNITY
             UnityEngine.Debug.LogError(message);
 #else
-            Console.WriteLine(message);
+            Logger?.Error(message);
 #endif
         }
 
@@ -1278,7 +1280,7 @@ namespace behaviac
 #if !BEHAVIAC_NOT_USE_UNITY
             UnityEngine.Debug.LogError(ex.Message);
 #else
-            Console.WriteLine(ex.Message);
+            Logger?.Error(ex.Message);
 #endif
         }
 
@@ -1798,7 +1800,7 @@ namespace behaviac
             const string kQuotStr = "&quot;";
             string ret = str;
 
-            if (ret.StartsWith(kQuotStr))
+            if (ret.Contains(kQuotStr))
             {
                 //Debug.Check(ret.EndsWith(kQuotStr));
                 ret = ret.Replace(kQuotStr, "\"");

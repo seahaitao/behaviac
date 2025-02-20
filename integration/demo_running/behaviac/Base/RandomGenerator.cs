@@ -21,7 +21,7 @@ namespace behaviac
         {
             if (Instance == null)
             {
-                Instance = new RandomGenerator(0);
+                Instance = new RandomGenerator((uint)DateTime.Now.Ticks);
             }
 
             return RandomGenerator.Instance;

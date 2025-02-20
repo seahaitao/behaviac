@@ -124,11 +124,13 @@ namespace behaviac
         {
             Init();
         }
-
+        
+        /*
         ~Agent()
         {
             OnDestroy();
         }
+        */
 #endif
 
         protected void Init()
@@ -147,10 +149,12 @@ namespace behaviac
         }
 
 #if BEHAVIAC_NOT_USE_MONOBEHAVIOUR
+        // {Agent类型名称}_{对应Agent类型创建对象数量的索引}_{m_id(Agent类型创建对象的全局索引)}
+        // UnitBehaviacAgent_0_0
         private string name;
 #endif
 
-        void OnDestroy()
+        public void OnDestroy()
         {
 #if !BEHAVIAC_RELEASE
             string agentClassName = this.GetClassTypeName();
@@ -176,7 +180,11 @@ namespace behaviac
             }
         }
 
+        public Action<string, long> StatisticsOutPut;
+
 #if !BEHAVIAC_RELEASE
+        // 所有生成的Agent对象,Key为"Agent类型名称#{Agent类型名称}_{对应Agent类型创建对象数量的索引}_{m_id(Agent类型创建对象的全局索引)}"
+        // Key:"UnitBehaviacAgent#UnitBehaviacAgent_0_0"
         private static Dictionary<string, Agent> ms_agents = new Dictionary<string, Agent>();
 
         public static Agent GetAgent(string agentName)
@@ -369,7 +377,9 @@ namespace behaviac
 #endif
         }
 
+        // 每创建一个Agent时赋值给m_id属性,并自动加1,
         private static int ms_agent_index;
+        // 每个继承Agent类型创建对象后自动加1,Key为对应的类型名称,用于给生成对象的name赋值,
         private static Dictionary<string, int> ms_agent_type_index;
 
         public void SetName(string instanceName)
@@ -1480,6 +1490,7 @@ namespace behaviac
                         //'oldBt' will be restored when the new triggered one ends
                         if (triggerMode == TriggerMode.TM_Return)
                         {
+                            // 触发模式为返回,当子树结束后返回控制到之前打断的地方继续执行,保存堆栈
                             BehaviorTreeStackItem_t item = new BehaviorTreeStackItem_t(this.m_currentBT, triggerMode, bByEvent);
                             Debug.Check(this.BTStack.Count < 200, "recursive?");
 

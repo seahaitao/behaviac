@@ -792,9 +792,9 @@ namespace PluginBehaviac.Exporters
             file.WriteLine("\t\t\tpBT->SetId((uint16_t)-1);");
             file.WriteLine("\t\t\tpBT->SetName(\"{0}\");", filename);
             file.WriteLine("\t\t\tpBT->SetIsFSM({0});", ((Node)behavior).IsFSM ? "true" : "false");
-            file.WriteLine("#if !BEHAVIAC_RELEASE");
+            //file.WriteLine("#if !BEHAVIAC_RELEASE");
             file.WriteLine("\t\t\tpBT->SetAgentType(\"{0}\");", agentType);
-            file.WriteLine("#endif");
+            //file.WriteLine("#endif");
 
             if (!string.IsNullOrEmpty(((Behavior)behavior).Domains))
             {

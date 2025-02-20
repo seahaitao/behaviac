@@ -51,10 +51,17 @@ namespace behaviac
         private Dictionary<uint, ICustomizedProperty> _customizedProperties = new Dictionary<uint, ICustomizedProperty>();
         private Dictionary<uint, ICustomizedProperty> _customizedStaticProperties = new Dictionary<uint, ICustomizedProperty>();
         private Dictionary<uint, IInstantiatedVariable> _customizedStaticVars = null;
+
+        // 用于存储导出的(Agent和继承Agent的类型)类型中的方法(CAgentMethod<>)的实例,在解析编辑好的XML树时会Clone一个实例然后再读取对应方法配置的参数,
+        // Dictionary<uint/*类型名称转换的数字*/, IMethod>,
         private Dictionary<uint, IMethod> _methods = new Dictionary<uint, IMethod>();
 
+
+        // 全局的, 用于存储导出的(Agent和继承Agent的类型)类型, Dictionary<uint/*类型名称转换的数字*/, AgentMeta>
         private static Dictionary<uint, AgentMeta> _agentMetas = new Dictionary<uint, AgentMeta>();
+        // 导出的类型创建者, 包括导出类型(继承Agent类,自定义枚举类等)和基础类型,还包括List<T>的类型,以类型名称(vector<T>对应List<T>)为Key
         private static Dictionary<string, TypeCreator> _Creators = new Dictionary<string, TypeCreator>();
+        // 导出的类型,包括导出类型(继承Agent类,自定义枚举类等)和基础类型,还包括List<T>的类型,以类型名称(vector<T>对应List<T>)为Key
         private static Dictionary<string, Type> _typesRegistered = new Dictionary<string, Type>();
 
         private static uint _totalSignature = 0;
@@ -88,6 +95,16 @@ namespace behaviac
             }
         }
 
+        private static Type _behaviorLoaderType;
+        public static Type _BehaviorLoaderType_
+        {
+            set
+            {
+                _behaviorLoaderType = value;
+            }
+        }
+
+        // 导出的类型"behaviac.BehaviorLoaderImplement"的对象,用于加载所有导出的类,计算器,比较器
         private static BehaviorLoader _behaviorLoader;
         public static BehaviorLoader _BehaviorLoader_
         {
@@ -102,26 +119,29 @@ namespace behaviac
             _signature = signature;
         }
 
+        public static string LoaderClassName = "behaviac.BehaviorLoaderImplement";
         public static void Register()
         {
             RegisterBasicTypes();
 
-            const string kLoaderClass = "behaviac.BehaviorLoaderImplement";
-            Type loaderType = Type.GetType(kLoaderClass);
-
+            Type? loaderType = _behaviorLoaderType;
             if (loaderType == null)
             {
-                System.Reflection.Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-                foreach (System.Reflection.Assembly assembly in assemblies)
+                loaderType = Type.GetType(LoaderClassName);
+                if (loaderType == null)
                 {
-                    loaderType = assembly.GetType(kLoaderClass);
-                    if (loaderType != null)
+                    System.Reflection.Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
+                    foreach (System.Reflection.Assembly assembly in assemblies)
                     {
-                        break;
+                        loaderType = assembly.GetType(LoaderClassName);
+                        if (loaderType != null)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-
+            
             if (loaderType != null)
             {
                 _behaviorLoader = (BehaviorLoader)Activator.CreateInstance(loaderType);
@@ -135,6 +155,7 @@ namespace behaviac
         {
             UnRegisterBasicTypes();
 
+            _behaviorLoaderType = null;
             if (_behaviorLoader != null)
             {
                 _behaviorLoader.UnLoad();
@@ -1009,7 +1030,7 @@ namespace behaviac
         {
             if (signatureStr != AgentMeta.TotalSignature.ToString())
             {
-                string errorInfo = "[meta] The types/AgentProperties.cs should be exported from the behaviac designer, and then integrated into your project!\n";
+                string errorInfo = $"[meta] The types/AgentProperties.cs should be exported from the behaviac designer, and then integrated into your project! signatureStr:{signatureStr}; AgentMeta.TotalSignature:{AgentMeta.TotalSignature};\n";
 
                 Debug.LogWarning(errorInfo);
                 Debug.Check(false, errorInfo);

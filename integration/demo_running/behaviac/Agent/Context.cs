@@ -24,6 +24,7 @@ namespace behaviac
 
         public struct HeapItem_t : IComparable<HeapItem_t>
         {
+            // 运行优先级
             public int priority;
             public Dictionary<int, Agent> agents;
 
@@ -43,7 +44,7 @@ namespace behaviac
         }
 
         private List<HeapItem_t> m_agents;
-
+        // 跟据优先级(priority)运行Agent对象
         public List<HeapItem_t> Agents
         {
             get

@@ -55,13 +55,13 @@ namespace behaviac
 
         public static void LogInfo()
         {
-            Debug.Log(string.Format("Config::IsProfiling {0}", Config.IsProfiling ? "true" : "false"));
-            Debug.Log(string.Format("Config::IsLogging {0}", Config.IsLogging ? "true" : "false"));
-            Debug.Log(string.Format("Config::IsLoggingFlush {0}", Config.IsLoggingFlush ? "true" : "false"));
-            Debug.Log(string.Format("Config::IsSocketing {0}", Config.IsSocketing ? "true" : "false"));
-            Debug.Log(string.Format("Config::IsSocketBlocking {0}", Config.IsSocketBlocking ? "true" : "false"));
-            Debug.Log(string.Format("Config::IsHotReload {0}", Config.IsHotReload ? "true" : "false"));
-            Debug.Log(string.Format("Config::SocketPort {0}", Config.SocketPort));
+            Debug.Log(string.Format("behaviac::Config::IsProfiling {0}", Config.IsProfiling ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::IsLogging {0}", Config.IsLogging ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::IsLoggingFlush {0}", Config.IsLoggingFlush ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::IsSocketing {0}", Config.IsSocketing ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::IsSocketBlocking {0}", Config.IsSocketBlocking ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::IsHotReload {0}", Config.IsHotReload ? "true" : "false"));
+            Debug.Log(string.Format("behaviac::Config::SocketPort {0}", Config.SocketPort));
         }
 
         public static bool IsProfiling
@@ -413,7 +413,6 @@ namespace behaviac
         }
 
         private double m_doubleValueSinceStartup = -1.0;
-        private DateTime m_dateTimeStartup = DateTime.Now;
 
         // Deprecated property, use DoubleValueSinceStartup insteadly.
         public virtual double TimeSinceStartup
@@ -637,11 +636,12 @@ namespace behaviac
                         filter = "*.bson.bytes";
                     }
 
-                    if (File.Exists(this.FilePath))
+                    if (Directory.Exists(this.m_workspaceExportPathAbs))
                     {
-                        m_DirectoryMonitor.Start(this.FilePath, filter);
+                        m_DirectoryMonitor.Start(this.m_workspaceExportPathAbs, filter);
                     }
                 }
+                behaviac.Config.IsHotReload = false;
             }
 
 #endif//BEHAVIAC_HOTRELOAD
@@ -993,42 +993,43 @@ namespace behaviac
         {
 #if !BEHAVIAC_RELEASE
 
-            if (behaviac.Config.IsHotReload)
+            if (!behaviac.Config.IsHotReload)
+                return;
+
+            if (!GetModifiedFiles())
+                return;
+
+            for (int i = 0; i < ModifiedFiles.Count; ++i)
             {
-                if (GetModifiedFiles())
+                string relativePath = ModifiedFiles[i];
+                if (!BehaviorTrees.ContainsKey(relativePath))
+                    continue;
+
+                if (!Load(relativePath, true))
+                    continue;
+
+                behaviac.Debug.LogWarning(string.Format("Hotreload:{0}", relativePath));
+                //*
+                if (!m_allBehaviorTreeTasks.TryGetValue(relativePath, out BTItem_t btItem))
+                    continue;
+
+                BehaviorTree behaviorTree = BehaviorTrees[relativePath];
+
+                for (int j = 0; j < btItem.bts.Count; ++j)
                 {
-                    for (int i = 0; i < ModifiedFiles.Count; ++i)
-                    {
-                        string relativePath = ModifiedFiles[i];
-
-                        if (m_allBehaviorTreeTasks.ContainsKey(relativePath))
-                        {
-                            behaviac.Debug.LogWarning(string.Format("Hotreload:{0}", relativePath));
-
-                            if (Load(relativePath, true))
-                            {
-                                BTItem_t btItem = m_allBehaviorTreeTasks[relativePath];
-                                BehaviorTree behaviorTree = m_behaviortrees[relativePath];
-
-                                for (int j = 0; j < btItem.bts.Count; ++j)
-                                {
-                                    BehaviorTreeTask behaviorTreeTask = btItem.bts[j];
-                                    behaviorTreeTask.reset(null);
-                                    behaviorTreeTask.Clear();
-                                    behaviorTreeTask.Init(behaviorTree);
-                                }
-
-                                for (int j = 0; j < btItem.agents.Count; ++j)
-                                {
-                                    Agent agent = btItem.agents[j];
-                                    agent.bthotreloaded(behaviorTree);
-                                }
-                            }
-                        }
-                    }
+                    BehaviorTreeTask behaviorTreeTask = btItem.bts[j];
+                    behaviorTreeTask.reset(null);
+                    behaviorTreeTask.Clear();
+                    behaviorTreeTask.Init(behaviorTree);
                 }
-            }
 
+                for (int j = 0; j < btItem.agents.Count; ++j)
+                {
+                    Agent agent = btItem.agents[j];
+                    agent.bthotreloaded(behaviorTree);
+                }
+                //*/
+            }
 #endif
         }
 
@@ -1358,12 +1359,6 @@ namespace behaviac
 
         public void Update()
         {
-#if BEHAVIAC_NOT_USE_UNITY
-            var span = DateTime.Now - m_dateTimeStartup;
-            m_doubleValueSinceStartup = span.TotalMilliseconds;
-            m_intValueSinceStartup = (long)span.TotalMilliseconds;
-#endif
-            
             this.DebugUpdate();
 
             if (this.m_bExecAgents)
@@ -1483,7 +1478,7 @@ namespace behaviac
         #region Load
 
         private Dictionary<string, BehaviorTree> m_behaviortrees;
-
+        // 用于存放通过XML生成的行为树,key为行为树路径名称, BehaviorTree为解析后的行为树
         private Dictionary<string, BehaviorTree> BehaviorTrees
         {
             get
@@ -1498,7 +1493,7 @@ namespace behaviac
         }
 
         private Dictionary<string, MethodInfo> m_btCreators;
-
+        // 保存行为树导出C#代码的生成方法接口"build_behavior_tree"(用于构建BehaviorTree),key为行为树路径名称,
         private Dictionary<string, MethodInfo> BTCreators
         {
             get
@@ -1510,6 +1505,11 @@ namespace behaviac
 
                 return m_btCreators;
             }
+        }
+
+        public int GetBehaviorTreesCount()
+        {
+            return BehaviorTrees.Count;
         }
 
         public void RecordBTAgentMapping(string relativePath, Agent agent)
@@ -1547,6 +1547,11 @@ namespace behaviac
         public void UnLoadAll()
         {
             m_allBehaviorTreeTasks.Clear();
+            BehaviorTrees.Clear();
+            BTCreators.Clear();
+        }
+        public void UnLoadBehaviorTrees()
+        {
             BehaviorTrees.Clear();
             BTCreators.Clear();
         }
@@ -1825,10 +1830,13 @@ namespace behaviac
 
         private class BTItem_t
         {
+            // 同一个行为树(继承Agent的类型)的对象,根据BehaviorTree创建的BehaviorTreeTask(包含每一层的信息,每个节点m_node属性为对应BehaviorTree的节点信息)
             public List<BehaviorTreeTask> bts = new List<BehaviorTreeTask>();
+            // 同一个行为树对应的根节点类型(继承Agent的类型)的对象,真正跑行为树的实体
             public List<Agent> agents = new List<Agent>();
         };
 
+        // 所有跟据读入的行为树(BehaviorTrees)创建的实例对象,Key为行为树名称,
         private Dictionary<string, BTItem_t> m_allBehaviorTreeTasks = new Dictionary<string, BTItem_t>();
 
         /**
@@ -1906,6 +1914,10 @@ namespace behaviac
 
         #endregion Load
 
+        // 存储node,attachment节点的类型(Key为类型名称,如:Action,Selector,IfElse,Condition,Sequence等),没有的话就在CallingAssembly里找,
+        // 用于在解析生成的行为树时创建对应的BehaviorNode实例对象,
+        // 热更的时候可以清除也可以不清除,因为存储的都behavior本身支持的节点类型,都在behavior的DLL里
+        // this.CallingAssembly=(Assembly.GetCallingAssembly())
         private Dictionary<string, Type> m_behaviorNodeTypes = new Dictionary<string, Type>();
 
         private void UnRegisterBehaviorNode()
@@ -1973,6 +1985,24 @@ namespace behaviac
         public bool ExportMetas(string exportPathRelativeToWorkspace)
         {
             return ExportMetas(exportPathRelativeToWorkspace, false);
+        }
+
+        public void CleanUpBeforeReload()
+        {
+            this.UnLoadBehaviorTrees();
+            ComparerRegister.Cleanup();
+            ComputerRegister.Cleanup();
+            this.UnRegisterStuff();
+
+            Debug.Log("Behaviac Reload CleanUp!");
+        }
+        public void ReloadInit()
+        {
+            ComparerRegister.Init();
+            ComputerRegister.Init();
+            this.RegisterStuff();
+
+            Debug.Log("Behaviac Reload Init!");
         }
 
     }

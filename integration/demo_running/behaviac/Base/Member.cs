@@ -324,7 +324,8 @@ namespace behaviac
         public override T GetValue(Agent self)
         {
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return default(T);
             if (_indexMember != null)
             {
                 int indexValue = ((CInstanceMember<int>)_indexMember).GetValue(self);
@@ -337,7 +338,8 @@ namespace behaviac
         public override void SetValue(Agent self, T value)
         {
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             if (_indexMember != null)
             {
                 int indexValue = ((CInstanceMember<int>)_indexMember).GetValue(self);
@@ -1071,7 +1073,8 @@ namespace behaviac
         public override void Run(Agent self)
         {
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent);
         }
 
@@ -1117,7 +1120,8 @@ namespace behaviac
             Debug.Check(_p1 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent, ((CInstanceMember<P1>)_p1).GetValue(self));
         }
 
@@ -1180,7 +1184,8 @@ namespace behaviac
             Debug.Check(_p2 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self));
@@ -1241,7 +1246,8 @@ namespace behaviac
             Debug.Check(_p3 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1310,7 +1316,8 @@ namespace behaviac
             Debug.Check(_p4 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1387,7 +1394,8 @@ namespace behaviac
             Debug.Check(_p5 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1472,7 +1480,8 @@ namespace behaviac
             Debug.Check(_p6 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1565,7 +1574,8 @@ namespace behaviac
             Debug.Check(_p7 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1666,7 +1676,8 @@ namespace behaviac
             Debug.Check(_p8 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1775,7 +1786,8 @@ namespace behaviac
             Debug.Check(_p9 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -1892,7 +1904,8 @@ namespace behaviac
             Debug.Check(_p10 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -2017,7 +2030,8 @@ namespace behaviac
             Debug.Check(_p11 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -2150,7 +2164,8 @@ namespace behaviac
             Debug.Check(_p12 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -2291,7 +2306,8 @@ namespace behaviac
             Debug.Check(_p13 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -2440,7 +2456,8 @@ namespace behaviac
             Debug.Check(_p14 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _returnValue.value = _fp(agent,
                                      ((CInstanceMember<P1>)_p1).GetValue(self),
                                      ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4066,7 +4083,8 @@ namespace behaviac
         public override void Run(Agent self)
         {
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent);
         }
 
@@ -4112,7 +4130,8 @@ namespace behaviac
             Debug.Check(_p1 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent, ((CInstanceMember<P1>)_p1).GetValue(self));
         }
 
@@ -4164,7 +4183,8 @@ namespace behaviac
             Debug.Check(_p2 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent, ((CInstanceMember<P1>)_p1).GetValue(self), ((CInstanceMember<P2>)_p2).GetValue(self));
         }
 
@@ -4223,7 +4243,8 @@ namespace behaviac
             Debug.Check(_p3 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4253,12 +4274,12 @@ namespace behaviac
         IInstanceMember _p3;
         IInstanceMember _p4;
 
-        public CAgentMethodVoid(FunctionPointer f, IInstanceMember p1, IInstanceMember p2, IInstanceMember p3, IInstanceMember p4)
-        {
-            _fp = f;
-        }
+		public CAgentMethodVoid(FunctionPointer f)
+		{
+			_fp = f;
+		}
 
-        public CAgentMethodVoid(CAgentMethodVoid<P1, P2, P3, P4> rhs)
+		public CAgentMethodVoid(CAgentMethodVoid<P1, P2, P3, P4> rhs)
         : base(rhs)
         {
             _fp = rhs._fp;
@@ -4292,7 +4313,8 @@ namespace behaviac
             Debug.Check(_p4 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4369,7 +4391,8 @@ namespace behaviac
             Debug.Check(_p5 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4454,7 +4477,8 @@ namespace behaviac
             Debug.Check(_p6 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4547,7 +4571,8 @@ namespace behaviac
             Debug.Check(_p7 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4648,7 +4673,8 @@ namespace behaviac
             Debug.Check(_p8 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4757,7 +4783,8 @@ namespace behaviac
             Debug.Check(_p9 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4874,7 +4901,8 @@ namespace behaviac
             Debug.Check(_p10 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -4999,7 +5027,8 @@ namespace behaviac
             Debug.Check(_p11 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -5132,7 +5161,8 @@ namespace behaviac
             Debug.Check(_p12 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -5273,7 +5303,8 @@ namespace behaviac
             Debug.Check(_p13 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),
@@ -5422,7 +5453,8 @@ namespace behaviac
             Debug.Check(_p14 != null);
 
             Agent agent = Utils.GetParentAgent(self, _instance);
-
+            if (null == agent)
+                return;
             _fp(agent,
                 ((CInstanceMember<P1>)_p1).GetValue(self),
                 ((CInstanceMember<P2>)_p2).GetValue(self),

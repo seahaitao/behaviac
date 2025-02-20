@@ -78,9 +78,7 @@ namespace PluginBehaviac.NodeExporters
 
             if (wait.Time != null)
             {
-                string strMethod = "{0}\t\tprotected override " + (Workspace.Current.UseIntValue ? "int GetIntTime(Agent pAgent)" : "double GetTime(Agent pAgent)");
-                stream.WriteLine(strMethod, indent);
-
+                stream.WriteLine("{0}\t\tprotected override double GetTime(Agent pAgent)", indent);
                 stream.WriteLine("{0}\t\t{{", indent);
 
                 string retStr = RightValueCsExporter.GenerateCode(node, wait.Time, stream, indent + "\t\t\t", string.Empty, string.Empty, "Time");

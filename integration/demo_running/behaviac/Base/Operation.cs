@@ -1035,6 +1035,9 @@ namespace behaviac
 
         public static void Cleanup()
         {
+            if (null == ms_valueComparers)
+                return;
+
             ms_valueComparers.Clear();
 
             //ms_valueComparers.UnRegister();
@@ -1445,6 +1448,9 @@ namespace behaviac
 
         public static void Cleanup()
         {
+            if (null == ms_valueComputers)
+                return;
+
             ms_valueComputers.Clear();
             ms_valueComputers = null;
         }

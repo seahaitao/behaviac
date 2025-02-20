@@ -40,6 +40,7 @@ namespace behaviac
     trigger mode to control the bt switching and back
     */
 
+    // 触发模式:转移;返回;
     public enum TriggerMode
     {
         TM_Transfer,
@@ -519,8 +520,10 @@ namespace behaviac
 
         protected virtual EBTStatus update_current(Agent pAgent, EBTStatus childStatus)
         {
+            long beginTime = DateTime.Now.Ticks;
             EBTStatus s = this.update(pAgent, childStatus);
-
+            var costTime = DateTime.Now.Ticks - beginTime;
+            pAgent.StatisticsOutPut?.Invoke(m_id.ToString(), costTime);
             return s;
         }
 

@@ -52,6 +52,7 @@ namespace PluginBehaviac.Exporters
                 {
                     ExportMembers(typesFolder);
                     ExportAgents(typesFolder);
+                    ExportAgentsHelper(typesFolder);
                     ExportCustomizedTypes(typesFolder);
                 }
             }
@@ -227,9 +228,9 @@ namespace PluginBehaviac.Exporters
             file.WriteLine("\t\t\tbt.SetId(-1);");
             file.WriteLine("\t\t\tbt.SetName(\"{0}\");", filename);
             file.WriteLine("\t\t\tbt.IsFSM = {0};", ((Node)behavior).IsFSM ? "true" : "false");
-            file.WriteLine("#if !BEHAVIAC_RELEASE");
+            //file.WriteLine("#if !BEHAVIAC_RELEASE");
             file.WriteLine("\t\t\tbt.SetAgentType(\"{0}\");", agentType.Replace("::", "."));
-            file.WriteLine("#endif");
+            //file.WriteLine("#endif");
 
             if (!string.IsNullOrEmpty(((Behavior)behavior).Domains))
             {
@@ -489,7 +490,8 @@ namespace PluginBehaviac.Exporters
 
                     if (!File.Exists(filename))
                     {
-                        ExportAgentCsFile(agent, filename, false);
+                        //ExportAgentCsFile(agent, filename, false);
+                        ExportAgentCsPropertyFile(agent, filename, false);
 
                         if (File.Exists(oldFilename))
                         {
@@ -503,7 +505,73 @@ namespace PluginBehaviac.Exporters
                         newFilename = Path.ChangeExtension(newFilename, ".new.cs");
                         newFilename = Path.Combine(behaviacAgentDir, newFilename);
 
-                        ExportAgentCsFile(agent, newFilename, false);
+                        //ExportAgentCsFile(agent, newFilename, false);
+                        ExportAgentCsPropertyFile(agent, newFilename, false);
+
+                        Debug.Check(File.Exists(newFilename));
+
+                        MergeFiles(filename, newFilename, filename);
+                    }
+
+                    if (File.Exists(oldFilename))
+                    {
+                        File.Delete(oldFilename);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Merge Cs Files Error : {0} {1}", filename, e.Message);
+                }
+            }
+        }
+
+        private void ExportAgentsHelper(string defaultAgentFolder)
+        {
+            foreach (AgentType agent in Plugin.AgentTypes)
+            {
+                if (agent.IsImplemented || agent.Name == "behaviac::Agent")
+                {
+                    continue;
+                }
+
+                string agentFolder = string.IsNullOrEmpty(agent.ExportLocation) ? defaultAgentFolder : Workspace.Current.MakeAbsolutePath(agent.ExportLocation);
+                string filename = Path.Combine(agentFolder, agent.BasicName + "Helper.cs");
+                string oldFilename = "";
+
+                if (!string.IsNullOrEmpty(agent.OldName) && agent.OldName != agent.Name)
+                {
+                    oldFilename = Path.Combine(agentFolder, agent.BasicOldName + "Helper.cs");
+                }
+
+                Debug.Check(filename != oldFilename);
+                agent.OldName = null;
+
+                try
+                {
+                    if (!Directory.Exists(agentFolder))
+                    {
+                        Directory.CreateDirectory(agentFolder);
+                    }
+
+                    if (!File.Exists(filename))
+                    {
+                        //ExportAgentCsFile(agent, filename, false);
+                        ExportAgentCsHelperFile(agent, filename, false);
+
+                        if (File.Exists(oldFilename))
+                        {
+                            MergeFiles(oldFilename, filename, filename);
+                        }
+                    }
+                    else
+                    {
+                        string behaviacAgentDir = GetBehaviacTypesDir();
+                        string newFilename = Path.GetFileName(filename);
+                        newFilename = Path.ChangeExtension(newFilename, "new.cs");
+                        newFilename = Path.Combine(behaviacAgentDir, newFilename);
+
+                        //ExportAgentCsFile(agent, newFilename, false);
+                        ExportAgentCsHelperFile(agent, newFilename, false);
                         Debug.Check(File.Exists(newFilename));
 
                         MergeFiles(filename, newFilename, filename);
@@ -708,6 +776,285 @@ namespace PluginBehaviac.Exporters
             }
         }
 
+        private void ExportAgentCsPropertyFile(AgentType agent, string filename, bool preview)
+        {
+            using (StringWriter file = new StringWriter())
+            {
+                string indent = "";
+
+                ExportFileWarningHeader(file);
+
+                file.WriteLine("using System;");
+                file.WriteLine("using System.Collections;");
+                file.WriteLine("using System.Collections.Generic;");
+                file.WriteLine();
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.file_init_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine();
+
+                if (!string.IsNullOrEmpty(agent.Namespace))
+                {
+                    indent = "\t";
+
+                    file.WriteLine("namespace {0}", agent.Namespace.Replace("::", "."));
+                    file.WriteLine("{");
+
+                    if (!preview)
+                    {
+                        ExportBeginComment(file, "", Behaviac.Design.Exporters.Exporter.namespace_init_part);
+                        file.WriteLine();
+                        ExportEndComment(file, "");
+                        file.WriteLine();
+                    }
+                }
+
+                string agentDisplayName = string.IsNullOrEmpty(agent.DisplayName) ? agent.BasicName : agent.DisplayName;
+                string agentDescription = string.IsNullOrEmpty(agent.Description) ? "" : agent.Description;
+                //file.WriteLine("{0}[behaviac.TypeMetaInfo(\"{1}\", \"{2}\")]", indent, agentDisplayName, agentDescription);
+                string baseClassStr = (agent.Base != null) ? string.Format(" : {0}", agent.Base.Name.Replace("::", ".")) : "";
+                file.WriteLine("{0}public class {1}{2}", indent, agent.BasicName, baseClassStr);
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, agent.BasicName);
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine("{0}{{", indent);
+
+                IList<PropertyDef> properties = agent.GetProperties(true);
+
+                foreach (PropertyDef prop in properties)
+                {
+                    if ((preview || !agent.IsImplemented) && !prop.IsInherited && !prop.IsPar && !prop.IsArrayElement)
+                    {
+                        string staticStr = prop.IsStatic ? "static " : "";
+                        string propType = DataCsExporter.GetGeneratedNativeType(prop.Type);
+                        //string defaultValue = DataCsExporter.GetGeneratedPropertyDefaultValue(prop, propType);
+                        string defaultValue = DataCsExporter.GetGeneratedPropertyDefaultValue(prop);
+
+                        if (defaultValue != null)
+                        {
+                            defaultValue = " = " + defaultValue;
+                        }
+
+                        //file.WriteLine("{0}\t[behaviac.MemberMetaInfo(\"{1}\", \"{2}\")]", indent, prop.DisplayName, prop.BasicDescription);
+                        if (prop.IsPublic)
+                        {
+                            file.WriteLine("{0}\tpublic {1}{2} {3}{4};", indent, staticStr, propType, prop.BasicName, defaultValue);
+                        }
+                        else
+                        {
+                            file.WriteLine("{0}\tprivate {1}{2} {3}{4};", indent, staticStr, propType, prop.BasicName, defaultValue);
+                            file.WriteLine("{0}\tpublic {1}void _set_{2}({3} value)", indent, staticStr, prop.BasicName, propType);
+                            file.WriteLine("{0}\t{{", indent);
+                            file.WriteLine("{0}\t\t{1} = value;", indent, prop.BasicName);
+                            file.WriteLine("{0}\t}}", indent);
+                            file.WriteLine("{0}\tpublic {1}{2} _get_{3}()", indent, staticStr, propType, prop.BasicName);
+                            file.WriteLine("{0}\t{{", indent);
+                            file.WriteLine("{0}\t\treturn {1};", indent, prop.BasicName);
+                            file.WriteLine("{0}\t}}", indent);
+                        }
+
+                        file.WriteLine();
+                    }
+                }
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent + "\t", Behaviac.Design.Exporters.Exporter.class_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent + "\t");
+                    file.WriteLine();
+                }
+
+                file.WriteLine("{0}}}", indent);
+
+                if (!string.IsNullOrEmpty(agent.Namespace))
+                {
+                    if (!preview)
+                    {
+                        file.WriteLine();
+                        ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.namespace_uninit_part);
+                        file.WriteLine();
+                        ExportEndComment(file, indent);
+                    }
+
+                    //end of namespace
+                    file.WriteLine("}");
+                }
+
+                file.WriteLine();
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.file_uninit_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine();
+
+                UpdateFile(file, filename);
+            }
+        }
+
+        private void ExportAgentCsHelperFile(AgentType agent, string filename, bool preview)
+        {
+            using (StringWriter file = new StringWriter())
+            {
+                string indent = "";
+
+                ExportFileWarningHeader(file);
+
+                file.WriteLine("using System;");
+                file.WriteLine("using System.Collections;");
+                file.WriteLine("using System.Collections.Generic;");
+                file.WriteLine();
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.file_init_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine();
+
+                if (!string.IsNullOrEmpty(agent.Namespace))
+                {
+                    indent = "\t";
+
+                    file.WriteLine("namespace {0}", agent.Namespace.Replace("::", "."));
+                    file.WriteLine("{");
+
+                    if (!preview)
+                    {
+                        ExportBeginComment(file, "", Behaviac.Design.Exporters.Exporter.namespace_init_part);
+                        file.WriteLine();
+                        ExportEndComment(file, "");
+                        file.WriteLine();
+                    }
+                }
+
+                string agentDisplayName = string.IsNullOrEmpty(agent.DisplayName) ? agent.BasicName : agent.DisplayName;
+                string agentDescription = string.IsNullOrEmpty(agent.Description) ? "" : agent.Description;
+                //file.WriteLine("{0}[behaviac.TypeMetaInfo(\"{1}\", \"{2}\")]", indent, agentDisplayName, agentDescription);
+                string baseClassStr = (agent.Base != null) ? string.Format(" : {0}", agent.Base.Name.Replace("::", ".")) : "";
+                string angetClassName = agent.BasicName + "Helper";
+                file.WriteLine("{0}public static class {1}", indent, angetClassName, baseClassStr);
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, angetClassName);
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine("{0}{{", indent);
+
+                IList<MethodDef> methods = agent.GetMethods(true);
+
+                foreach (MethodDef method in methods)
+                {
+                    if ((preview || !agent.IsImplemented) && !method.IsInherited && !method.IsNamedEvent)
+                    {
+                        string publicStr = method.IsPublic ? "public " : "private ";
+                        //string staticStr = method.IsStatic ? "static " : "";
+                        string staticStr = "static ";
+
+                        string allParams = $"this {agent.BasicName} self";
+
+                        foreach (MethodDef.Param param in method.Params)
+                        {
+                            if (!string.IsNullOrEmpty(allParams))
+                            {
+                                allParams += ", ";
+                            }
+
+                            string paramType = DataCsExporter.GetGeneratedNativeType(param.NativeType);
+
+                            if (param.IsRef)
+                            {
+                                paramType = "ref " + paramType;
+                            }
+
+                            allParams += paramType + " " + param.Name;
+                        }
+
+                        string returnType = DataCsExporter.GetGeneratedNativeType(method.ReturnType);
+                        string returnValue = DataCsExporter.GetGeneratedDefaultValue(method.ReturnType, returnType);
+
+                        //file.WriteLine("{0}\t[behaviac.MethodMetaInfo(\"{1}\", \"{2}\")]", indent, method.DisplayName, method.BasicDescription);
+                        ExportMethodComment(file, "\t" + indent);
+
+                        file.WriteLine("{0}\t{1}{2}{3} {4}({5})", indent, publicStr, staticStr, returnType, method.BasicName, allParams);
+                        file.WriteLine("{0}\t{{", indent);
+
+                        if (!preview)
+                        {
+                            ExportBeginComment(file, "\t\t" + indent, method.BasicName);
+                        }
+
+                        if (returnValue != null)
+                        {
+                            //file.WriteLine();
+                            file.WriteLine("{0}\t\treturn {1};", indent, returnValue);
+                        }
+
+                        if (!preview)
+                        {
+                            ExportEndComment(file, "\t\t" + indent);
+                        }
+
+                        file.WriteLine("{0}\t}}", indent);
+                        file.WriteLine();
+                    }
+                }
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent + "\t", Behaviac.Design.Exporters.Exporter.class_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent + "\t");
+                    file.WriteLine();
+                }
+
+                file.WriteLine("{0}}}", indent);
+
+                if (!string.IsNullOrEmpty(agent.Namespace))
+                {
+                    if (!preview)
+                    {
+                        file.WriteLine();
+                        ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.namespace_uninit_part);
+                        file.WriteLine();
+                        ExportEndComment(file, indent);
+                    }
+
+                    //end of namespace
+                    file.WriteLine("}");
+                }
+
+                file.WriteLine();
+
+                if (!preview)
+                {
+                    ExportBeginComment(file, indent, Behaviac.Design.Exporters.Exporter.file_uninit_part);
+                    file.WriteLine();
+                    ExportEndComment(file, indent);
+                }
+
+                file.WriteLine();
+
+                UpdateFile(file, filename);
+            }
+        }
         private void ExportCustomizedTypes(string agentFolder)
         {
             if (TypeManager.Instance.HasNonImplementedTypes())

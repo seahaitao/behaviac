@@ -504,25 +504,25 @@ namespace behaviac
 
             if (Config.IsLogging)
             {
-                System.IO.StreamWriter fp = null;
                 //int agentId = pAgent.GetId();
                 int agentId = -1;
+                if (null != pAgent)
+                    agentId = pAgent.GetId();
 
-                if (!m_logs.ContainsKey(agentId))
+                string buffer;
+                string strIndex;
+                if (string.IsNullOrEmpty(m_logFilePath))
                 {
-                    string buffer;
-
-                    if (string.IsNullOrEmpty(m_logFilePath))
+                    if (agentId == -1)
                     {
-                        if (agentId == -1)
-                        {
-                            buffer = "_behaviac_$_.log";
-                        }
-                        else
-                        {
-                            buffer = string.Format("Agent_$_{0:3}.log", agentId);
-                        }
+                        buffer = "_behaviac_$_.log";
+                    }
+                    else
+                    {
+                        buffer = string.Format("Agent_$_{0:D3}.log", agentId);
+                    }
 
+                    strIndex = string.Copy(buffer);
 #if !BEHAVIAC_NOT_USE_UNITY
                         if (UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsEditor &&
                             UnityEngine.Application.platform != UnityEngine.RuntimePlatform.WindowsPlayer)
@@ -530,19 +530,40 @@ namespace behaviac
                             buffer = Path.Combine(UnityEngine.Application.persistentDataPath, buffer);
                         }
 #endif
-                    }
-                    else
-                    {
-                        buffer = m_logFilePath;
-                    }
-
-                    fp = new System.IO.StreamWriter(buffer);
-
-                    m_logs[agentId] = fp;
                 }
                 else
                 {
-                    fp = m_logs[agentId];
+                    if (null == pAgent)
+                    {
+                        buffer = "_behaviac_$_.log";
+                    }
+                    else
+                    {
+                        string btName = BehaviorTreeTask.GetParentTreeName(pAgent, pAgent.CurrentTreeTask.GetNode());
+                        if (!string.IsNullOrEmpty(btName))
+                        {
+                            btName = btName.Replace('/', '$');
+                            buffer = string.Format("{0}.log", btName);
+                        }
+                        else
+                        {
+                            buffer = string.Format("Agent_$_{0:D3}.log", agentId);
+                        }
+                    }
+                    strIndex = string.Copy(buffer);
+                    buffer = m_logFilePath + buffer;
+                }
+
+                System.IO.StreamWriter fp = null;
+                if (!m_logs.ContainsKey(strIndex))
+                {
+                    fp = new System.IO.StreamWriter(buffer);
+
+                    m_logs[strIndex] = fp;
+                }
+                else
+                {
+                    fp = m_logs[strIndex];
                 }
 
                 return fp;
@@ -566,7 +587,7 @@ namespace behaviac
 
                 System.IO.StreamWriter fp = GetFile(pAgent);
 
-                string szTime = DateTime.Now.ToString();
+                string szTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss.ffff");
 
                 string buffer = string.Format("[{0}]{1}", szTime, txt);
 
@@ -599,7 +620,7 @@ namespace behaviac
         }
 
 #if !BEHAVIAC_RELEASE
-        private  Dictionary<int, System.IO.StreamWriter> m_logs = new Dictionary<int, StreamWriter>();
+        private  Dictionary<string, System.IO.StreamWriter> m_logs = new Dictionary<string, StreamWriter>();
         private  string m_logFilePath;
 #endif
     };

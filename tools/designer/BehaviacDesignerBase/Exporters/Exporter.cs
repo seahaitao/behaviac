@@ -248,14 +248,14 @@ namespace Behaviac.Design.Exporters
 
         protected static void ExportBeginComment(StringWriter file, string indent, string name)
         {
-            //file.WriteLine("{0}{1} {2}", indent, item_begin, name);
-            file.WriteLine("{0} {1}", item_begin, name);
+            file.WriteLine("{0}{1} {2}", indent, item_begin, name);
+            //file.WriteLine("{0} {1}", item_begin, name);
         }
 
         protected static void ExportEndComment(StringWriter file, string indent)
         {
-            //file.WriteLine("{0}{1}", indent, item_end);
-            file.WriteLine("{0}", item_end);
+            file.WriteLine("{0}{1}", indent, item_end);
+            //file.WriteLine("{0}", item_end);
         }
 
         private static bool StartsWith(string token, string line)
